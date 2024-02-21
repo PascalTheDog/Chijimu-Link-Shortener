@@ -1,0 +1,59 @@
+﻿@page "/"
+
+@using Chijimu.Services
+
+@inject ChijimuAPIService ChijimuAPIService
+
+<h1>CHIJIMU</h1>
+<h2>Link shortener</h2>
+<div>
+    <span>
+        Please enter a URL:
+    </span>
+    <input type="text"
+           @bind-value="@_enteredUrl" />
+    <button disabled="@string.IsNullOrEmpty(_enteredUrl)"
+            @onclick="OnShortenButtonClick">
+        Shorten
+    </button>
+</div>
+@if (!string.IsNullOrEmpty(_shortenedUrl))
+{
+    <div>
+        <span>
+            The shortened URL is: <b>@_shortenedUrl</b>
+        </span>
+    </div>
+}
+
+@code
+{
+    private string? _enteredUrl;
+    private string? _shortenedUrl;
+
+    private async Task<string?> GetShortenedURL(string enteredUrl)
+    {
+        HttpResponseMessage response = await ChijimuAPIService.ShortenURL(enteredUrl);
+
+        string shortenedUrl;
+
+        if (response.IsSuccessStatusCode)
+        {
+            shortenedUrl = await response.Content.ReadAsStringAsync();
+        }
+        else
+        {
+            shortenedUrl = string.Empty;
+        }
+
+        return shortenedUrl;
+    }
+
+    private async Task OnShortenButtonClick()
+    {
+        if (!string.IsNullOrWhiteSpace(_enteredUrl))
+        {
+            _shortenedUrl = await GetShortenedURL(_enteredUrl);
+        }
+    }
+}
