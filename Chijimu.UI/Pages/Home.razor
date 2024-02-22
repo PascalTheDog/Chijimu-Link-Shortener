@@ -2,7 +2,7 @@
 
 @using Chijimu.UI.Services
 
-@inject ChijimuApiService ChijimuApiService
+@inject ChijimuApiService ChijimuApi
 
 <h1>CHIJIMU</h1>
 <h2>Link shortener</h2>
@@ -31,22 +31,9 @@
     private string? _enteredUrl;
     private string? _shortenedUrl;
 
-    private async Task<string?> GetShortenedUrl(string enteredUrl)
+    private Task<string?> GetShortenedUrl(string enteredUrl)
     {
-        HttpResponseMessage response = await ChijimuApiService.ShortenUrlAsync(enteredUrl);
-
-        string shortenedUrl;
-
-        if (response.IsSuccessStatusCode)
-        {
-            shortenedUrl = await response.Content.ReadAsStringAsync();
-        }
-        else
-        {
-            shortenedUrl = string.Empty;
-        }
-
-        return shortenedUrl;
+        return ChijimuApi.ShortenUrlAsync(enteredUrl);
     }
 
     private async Task OnShortenButtonClick()

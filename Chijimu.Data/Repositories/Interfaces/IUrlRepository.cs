@@ -8,5 +8,5 @@ public interface IUrlRepository
 
     public Task<Url?> GetByFullUrlAsync(string url);
 
-    public Task<Url?> GetByShortUrlAsync(string shortUrlIdentifier);
+    public Task<Url?> GetByShortUrlIdentifierAsync(string shortUrlIdentifier);
 }

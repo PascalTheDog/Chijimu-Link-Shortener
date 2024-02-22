@@ -1,4 +1,5 @@
-﻿using Chijimu.API.Services.Interfaces;
+﻿using Chijimu.API.Models;
+using Chijimu.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chijimu.API;
@@ -14,23 +15,19 @@ public class UrlController : ControllerBase
         _urlService = urlService;
     }
 
-    [HttpGet("get-full-url/{shortenedUrl}")]
-    public async Task<ActionResult<string>> GetFullUrl(string shortenedUrl)
+    [HttpGet("get-by-short-url/{shortUrlIdentifier}", Name = "GetByShortUrlIdentifier")]
+    public async Task<IActionResult> GetByShortUrlIdentifierAsync(string shortUrlIdentifier)
     {
-        string? fullUrl = await _urlService.GetFullUrlAsync(shortenedUrl);
+        Url? url = await _urlService.GetByShortUrlIdentifierAsync(shortUrlIdentifier);
 
-        ActionResult<string> result = !string.IsNullOrEmpty(fullUrl)
-            ? fullUrl
-            : NotFound();
-
-        return result;
+        return Ok(url);
     }
 
     [HttpPost("shorten")]
-    public async Task<ActionResult<string>> ShortenAsync([FromBody]string url)
+    public async Task<IActionResult> ShortenAsync([FromBody]string url)
     {
-        string? shortenedUrl = await _urlService.ShortenUrlAsync(url);
+        Url? addedUrl = await _urlService.ShortenUrlAsync(url);
 
-        return CreatedAtAction(nameof(GetFullUrl), new { shortenedUrl }, shortenedUrl);
+        return CreatedAtAction("GetByShortUrlIdentifier", new { addedUrl?.ShortUrlIdentifier }, addedUrl);
     }
 }

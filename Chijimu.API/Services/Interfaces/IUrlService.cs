@@ -1,7 +1,9 @@
-﻿namespace Chijimu.API.Services.Interfaces;
+﻿using Chijimu.API.Models;
+
+namespace Chijimu.API.Services.Interfaces;
 
 public interface IUrlService
 {
-    public Task<string?> GetFullUrlAsync(string shortenedUrl);
-    public Task<string?> ShortenUrlAsync(string url);
+    public Task<Url?> GetByShortUrlIdentifierAsync(string shortenedUrl);
+    public Task<Url?> ShortenUrlAsync(string url);
 }

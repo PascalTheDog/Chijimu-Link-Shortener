@@ -38,9 +38,9 @@ public class UrlRepository : IUrlRepository
             .FirstOrDefaultAsync();
     }
 
-    public Task<Url?> GetByShortUrlAsync(string shortUrlIdentifier)
+    public Task<Url?> GetByShortUrlIdentifierAsync(string shortUrlIdentifier)
     {
-        _logger.LogTrace("[{method}({param})]", nameof(GetByShortUrlAsync), shortUrlIdentifier);
+        _logger.LogTrace("[{method}({param})]", nameof(GetByShortUrlIdentifierAsync), shortUrlIdentifier);
 
         return _urlContext.Urls
             .AsNoTracking()

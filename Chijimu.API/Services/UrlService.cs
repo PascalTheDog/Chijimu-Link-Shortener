@@ -1,11 +1,15 @@
 ﻿using Chijimu.API.Services.Interfaces;
-using Chijimu.Data.Models;
 using Chijimu.Data.Repositories.Interfaces;
+using ApiModels = Chijimu.API.Models;
+using DataModels = Chijimu.Data.Models;
 
 namespace Chijimu.API.Services;
 
 public class UrlService : IUrlService
 {
+    // LOAD THIS FROM A CONFIG FILE.
+    private const string _apiUrlBase = "https://localhost:7242/";
+
     private readonly ILogger<UrlService> _logger;
     private static readonly Random _rng = new();
     private static readonly char[] _shortUrlCharacters = GetShortUrlCharacters();
@@ -54,18 +58,27 @@ public class UrlService : IUrlService
         return shortUrl;
     }
 
-    public async Task<string?> GetFullUrlAsync(string shortenedUrl)
+    public async Task<ApiModels.Url?> GetByShortUrlIdentifierAsync(string shortenedUrl)
     {
-        _logger.LogTrace("[{method}({param})]", nameof(GetFullUrlAsync), shortenedUrl);
+        _logger.LogTrace("[{method}({param})]", nameof(GetByShortUrlIdentifierAsync), shortenedUrl);
 
         if (string.IsNullOrEmpty(shortenedUrl))
         {
             throw new ArgumentNullException(nameof(shortenedUrl));
         }
 
-        Url? url = await _urlRepository.GetByShortUrlAsync(shortenedUrl);
+        DataModels.Url? urlData = await _urlRepository.GetByShortUrlIdentifierAsync(shortenedUrl);
 
-        return url?.FullUrl;
+        ApiModels.Url? url = urlData != null
+            ? new()
+            {
+                FullUrl = urlData.FullUrl,
+                ShortUrlBase = _apiUrlBase,
+                ShortUrlIdentifier = urlData.ShortUrlIdentifier
+            }
+            : null;
+
+        return url;
     }
 
     private static char[] GetShortUrlCharacters()
@@ -85,7 +98,7 @@ public class UrlService : IUrlService
         return urlCharacters;
     }
 
-    public async Task<string?> ShortenUrlAsync(string url)
+    public async Task<ApiModels.Url?> ShortenUrlAsync(string url)
     {
         _logger.LogTrace("[{method}({param})]", nameof(ShortenUrlAsync), url);
 
@@ -94,13 +107,13 @@ public class UrlService : IUrlService
             throw new ArgumentNullException(nameof(url));
         }
 
-        Url? existingUrl = await _urlRepository.GetByFullUrlAsync(url);
+        DataModels.Url? existingUrl = await _urlRepository.GetByFullUrlAsync(url);
 
-        Url? savedUrl;
+        DataModels.Url? savedUrl;
 
         if (existingUrl == null)
         {
-            Url urlToAdd = new()
+            DataModels.Url urlToAdd = new()
             {
                 FullUrl = url,
                 ShortUrlIdentifier = GenerateShortUrl()
@@ -113,6 +126,15 @@ public class UrlService : IUrlService
             savedUrl = existingUrl;
         }
 
-        return savedUrl.ShortUrlIdentifier;
+        ApiModels.Url? returnUrl = savedUrl != null
+            ? new()
+            {
+                FullUrl = savedUrl.FullUrl,
+                ShortUrlBase = _apiUrlBase,
+                ShortUrlIdentifier = savedUrl.ShortUrlIdentifier
+            }
+            : null;
+
+        return returnUrl;
     }
 }
