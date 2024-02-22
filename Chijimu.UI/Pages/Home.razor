@@ -1,8 +1,8 @@
 ﻿@page "/"
 
-@using Chijimu.Services
+@using Chijimu.UI.Services
 
-@inject ChijimuAPIService ChijimuAPIService
+@inject ChijimuApiService ChijimuApiService
 
 <h1>CHIJIMU</h1>
 <h2>Link shortener</h2>
@@ -31,9 +31,9 @@
     private string? _enteredUrl;
     private string? _shortenedUrl;
 
-    private async Task<string?> GetShortenedURL(string enteredUrl)
+    private async Task<string?> GetShortenedUrl(string enteredUrl)
     {
-        HttpResponseMessage response = await ChijimuAPIService.ShortenURL(enteredUrl);
+        HttpResponseMessage response = await ChijimuApiService.ShortenUrlAsync(enteredUrl);
 
         string shortenedUrl;
 
@@ -53,7 +53,7 @@
     {
         if (!string.IsNullOrWhiteSpace(_enteredUrl))
         {
-            _shortenedUrl = await GetShortenedURL(_enteredUrl);
+            _shortenedUrl = await GetShortenedUrl(_enteredUrl);
         }
     }
 }

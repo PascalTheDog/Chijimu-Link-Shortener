@@ -1,9 +1,16 @@
-using Chijimu.Core.Services;
-using Chijimu.Core.Services.Interfaces;
+using Chijimu.API.Services;
+using Chijimu.API.Services.Interfaces;
+using Chijimu.Data.Contexts;
+using Chijimu.Data.Repositories;
+using Chijimu.Data.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTransient<IConvertService, ConvertService>();
+builder.Services.AddDbContext<UrlContext>(options =>
+    UrlContext.SetConnectionString(options, builder.Configuration));
+
+builder.Services.AddTransient<IUrlService, UrlService>();
+builder.Services.AddTransient<IUrlRepository, UrlRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

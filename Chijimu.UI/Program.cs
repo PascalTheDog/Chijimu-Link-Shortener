@@ -1,8 +1,8 @@
-using Chijimu.Services;
+using Chijimu.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpClient<ChijimuAPIService>();
+builder.Services.AddHttpClient<ChijimuApiService>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
