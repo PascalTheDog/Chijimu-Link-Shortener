@@ -7,16 +7,15 @@ namespace Chijimu.API.Services;
 
 public class UrlService : IUrlService
 {
-    // LOAD THIS FROM A CONFIG FILE.
-    private const string _apiUrlBase = "https://localhost:7242/";
-
+    private readonly IHttpContextAccessor _httpContextAccess;
     private readonly ILogger<UrlService> _logger;
     private static readonly Random _rng = new();
     private static readonly char[] _shortUrlCharacters = GetShortUrlCharacters();
     private readonly IUrlRepository _urlRepository;
 
-    public UrlService(ILogger<UrlService> logger, IUrlRepository urlRepository)
+    public UrlService(ILogger<UrlService> logger, IUrlRepository urlRepository, IHttpContextAccessor httpContextAccess)
     {
+        _httpContextAccess = httpContextAccess;
         _logger = logger;
         _urlRepository = urlRepository;
     }
@@ -73,12 +72,31 @@ public class UrlService : IUrlService
             ? new()
             {
                 FullUrl = urlData.FullUrl,
-                ShortUrlBase = _apiUrlBase,
+                ShortUrlBase = GetShortUrlBase(),
                 ShortUrlIdentifier = urlData.ShortUrlIdentifier
             }
             : null;
 
         return url;
+    }
+
+    private string GetShortUrlBase()
+    {
+        HttpContext? httpContext = _httpContextAccess.HttpContext;
+
+        string urlBase;
+
+        if (httpContext != null)
+        {
+            HttpRequest req = httpContext.Request;
+            urlBase = $"{req.Scheme}://{req.Host}/";
+        }
+        else
+        {
+            urlBase = string.Empty;
+        }
+
+        return urlBase;
     }
 
     private static char[] GetShortUrlCharacters()
@@ -130,7 +148,7 @@ public class UrlService : IUrlService
             ? new()
             {
                 FullUrl = savedUrl.FullUrl,
-                ShortUrlBase = _apiUrlBase,
+                ShortUrlBase = GetShortUrlBase(),
                 ShortUrlIdentifier = savedUrl.ShortUrlIdentifier
             }
             : null;

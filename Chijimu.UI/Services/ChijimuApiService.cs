@@ -8,6 +8,7 @@ namespace Chijimu.UI.Services;
 
 public class ChijimuApiService
 {
+    private const string _apiUrlBase = "https://localhost:7242";
     private readonly HttpClient _httpClient;
     private readonly ILogger<ChijimuApiService> _logger;
 
@@ -23,7 +24,7 @@ public class ChijimuApiService
     {
         _logger.LogTrace("[{method}()]", nameof(InitialiseHttpClient));
 
-        _httpClient.BaseAddress = new Uri("https://localhost:7242");
+        _httpClient.BaseAddress = new Uri(_apiUrlBase);
         _httpClient.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
     }
 
