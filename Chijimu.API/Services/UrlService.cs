@@ -1,16 +1,19 @@
 ﻿using Chijimu.API.Services.Interfaces;
 using Chijimu.Data.Repositories.Interfaces;
+using System.Text.RegularExpressions;
 using ApiModels = Chijimu.API.Models;
 using DataModels = Chijimu.Data.Models;
 
 namespace Chijimu.API.Services;
 
-public class UrlService : IUrlService
+public partial class UrlService : IUrlService
 {
     private readonly IHttpContextAccessor _httpContextAccess;
     private readonly ILogger<UrlService> _logger;
     private static readonly Random _rng = new();
     private static readonly char[] _shortUrlCharacters = GetShortUrlCharacters();
+    private static readonly Regex _shortUrlIdRegex = ShortUrlIdRegex();
+    private static readonly Regex _urlRegex = UrlRegex();
     private readonly IUrlRepository _urlRepository;
 
     public UrlService(ILogger<UrlService> logger, IUrlRepository urlRepository, IHttpContextAccessor httpContextAccess)
@@ -46,13 +49,13 @@ public class UrlService : IUrlService
         int randomNumber = _rng.Next(0, _shortUrlCharacters.Length - 1);
 
         string shortUrl = ConvertToUrlPart(randomNumber);
-        shortUrl += ConvertToUrlPart(currentTime.Year);
+        shortUrl += ConvertToUrlPart(currentTime.Year % 100);
         shortUrl += ConvertToUrlPart(currentTime.Month);
         shortUrl += ConvertToUrlPart(currentTime.Day);
         shortUrl += ConvertToUrlPart(currentTime.Hour);
         shortUrl += ConvertToUrlPart(currentTime.Minute);
         shortUrl += ConvertToUrlPart(currentTime.Second);
-        shortUrl += ConvertToUrlPart(currentTime.Millisecond);
+        shortUrl += ConvertToUrlPart(currentTime.Millisecond / 10);
 
         return shortUrl;
     }
@@ -64,6 +67,13 @@ public class UrlService : IUrlService
         if (string.IsNullOrEmpty(shortenedUrl))
         {
             throw new ArgumentNullException(nameof(shortenedUrl));
+        }
+
+        if (!IsValidShortUrlId(shortenedUrl))
+        {
+            string errorMessage = "The provided string is not a valid short URL.";
+            _logger.LogError("[{method}]: {message}", nameof(GetByShortUrlIdentifierAsync), errorMessage);
+            throw new ArgumentException(errorMessage, nameof(shortenedUrl));
         }
 
         DataModels.Url? urlData = await _urlRepository.GetByShortUrlIdentifierAsync(shortenedUrl);
@@ -116,6 +126,16 @@ public class UrlService : IUrlService
         return urlCharacters;
     }
 
+    private bool IsValidShortUrlId(string shortUrlId)
+    {
+        return ShortUrlIdRegex().IsMatch(shortUrlId);
+    }
+
+    private bool IsValidUrl(string url)
+    {
+        return UrlRegex().IsMatch(url);
+    }
+
     public async Task<ApiModels.Url?> ShortenUrlAsync(string url)
     {
         _logger.LogTrace("[{method}({param})]", nameof(ShortenUrlAsync), url);
@@ -123,6 +143,13 @@ public class UrlService : IUrlService
         if (string.IsNullOrEmpty(url))
         {
             throw new ArgumentNullException(nameof(url));
+        }
+
+        if (!IsValidUrl(url))
+        {
+            string errorMessage = "The provided string was not a valid URL.";
+            _logger.LogError("[{method}]: {message}", nameof(ShortenUrlAsync), errorMessage);
+            throw new ArgumentException(errorMessage, nameof(url));
         }
 
         DataModels.Url? existingUrl = await _urlRepository.GetByFullUrlAsync(url);
@@ -155,4 +182,10 @@ public class UrlService : IUrlService
 
         return returnUrl;
     }
+
+    [GeneratedRegex("^[a-zA-Z0-9-_]{1,10}?")]
+    private static partial Regex ShortUrlIdRegex();
+
+    [GeneratedRegex("^https?://[A-Za-z0-9\\-]{1,63}(\\.[A-Za-z0-9\\-]{1,63}){0,253}(/.*?)??$")]
+    private static partial Regex UrlRegex();
 }

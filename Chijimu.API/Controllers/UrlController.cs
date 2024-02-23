@@ -20,7 +20,9 @@ public class UrlController : ControllerBase
     {
         Url? url = await _urlService.GetByShortUrlIdentifierAsync(shortUrlIdentifier);
 
-        return Ok(url);
+        return url != null
+            ? Ok(url)
+            : NotFound();
     }
 
     [HttpPost("shorten")]

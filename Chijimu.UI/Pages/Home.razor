@@ -1,6 +1,7 @@
 ﻿@page "/"
 
 @using Chijimu.UI.Services
+@using System.Text.RegularExpressions
 
 @inject ChijimuApiService ChijimuApi
 
@@ -10,37 +11,98 @@
     <span>
         Please enter a URL:
     </span>
-    <input type="text"
+    <input placeholder="https://www.example.com"
+           type="url"
            @bind-value="@_enteredUrl" />
-    <button disabled="@string.IsNullOrEmpty(_enteredUrl)"
-            @onclick="OnShortenButtonClick">
+    <button disabled="@IsShortenButtonDisabled()"
+            @onclick="OnShortenButtonClick"
+            type="submit">
         Shorten
     </button>
 </div>
-@if (!string.IsNullOrEmpty(_shortenedUrl))
-{
-    <div>
+<div>
+    @if (_isLoading)
+    {
+        <span>
+            Shortening...
+        </span>
+    }
+    else if (_hasInputError)
+    {
+        <span style="color: red;">
+            @_errorMessage
+        </span>
+    }
+    else if (!string.IsNullOrEmpty(_shortenedUrl))
+    {
         <span>
             The shortened URL is: <b>@_shortenedUrl</b>
         </span>
-    </div>
-}
+    }
+</div>
 
 @code
 {
     private string? _enteredUrl;
+    private string? _errorMessage;
+    private bool _hasInputError = false;
+    private bool _isLoading = false;
     private string? _shortenedUrl;
+    private readonly Regex _urlRegex = new("^https?://[A-Za-z0-9\\-]{1,63}(\\.[A-Za-z0-9\\-]{1,63}){0,253}(/.*?)??$");
+    private readonly Regex _urlSchemeRegex = new("^https?://.*?$");
 
-    private Task<string?> GetShortenedUrl(string enteredUrl)
+    private bool HasUrlScheme(string url)
     {
-        return ChijimuApi.ShortenUrlAsync(enteredUrl);
+        return _urlSchemeRegex.IsMatch(url);
+    }
+
+    private bool IsShortenButtonDisabled()
+    {
+        return string.IsNullOrEmpty(_enteredUrl) || _isLoading;
+    }
+
+    private bool IsValidUrl(string url)
+    {
+        return _urlRegex.IsMatch(url);
     }
 
     private async Task OnShortenButtonClick()
     {
+        _hasInputError = false;
+
         if (!string.IsNullOrWhiteSpace(_enteredUrl))
         {
-            _shortenedUrl = await GetShortenedUrl(_enteredUrl);
+            string urlToSubmit = !HasUrlScheme(_enteredUrl)
+                ? $"http://{_enteredUrl}"
+                : _enteredUrl;
+
+            if (IsValidUrl(urlToSubmit))
+            {
+                _isLoading = true;
+
+                try
+                {
+                    _shortenedUrl = await ChijimuApi.ShortenUrlAsync(urlToSubmit);
+                }
+                catch
+                {
+                    _errorMessage =
+                        "An error occurred when shortening the URL. Please try again.";
+                    _hasInputError = true;
+                }
+
+                _isLoading = false;
+            }
+            else
+            {
+                _errorMessage = "Please enter a valid URL.";
+                _hasInputError = true;
+            }
+        }
+        else
+        {
+            _errorMessage = "Please enter a valid URL.";
+            _hasInputError = true;
         }
     }
 }
