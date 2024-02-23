@@ -1,3 +1,4 @@
+using Chijimu.UI.Configuration;
 using Chijimu.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient<ChijimuApiService>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+
+builder.Services.Configure<ApiSettings>(
+    builder.Configuration.GetSection(ApiSettings.Name));
 
 var app = builder.Build();
 

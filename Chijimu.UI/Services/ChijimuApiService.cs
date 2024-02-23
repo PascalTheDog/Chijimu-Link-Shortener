@@ -1,4 +1,6 @@
 ﻿using Chijimu.API.Models;
+using Chijimu.UI.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -8,12 +10,13 @@ namespace Chijimu.UI.Services;
 
 public class ChijimuApiService
 {
-    private const string _apiUrlBase = "https://localhost:7242";
+    private readonly ApiSettings _apiSettings;
     private readonly HttpClient _httpClient;
     private readonly ILogger<ChijimuApiService> _logger;
 
-    public ChijimuApiService(ILogger<ChijimuApiService> logger, HttpClient httpClient)
+    public ChijimuApiService(ILogger<ChijimuApiService> logger, HttpClient httpClient, IOptions<ApiSettings> options)
     {
+        _apiSettings = options.Value;
         _httpClient = httpClient;
         _logger = logger;
 
@@ -24,7 +27,7 @@ public class ChijimuApiService
     {
         _logger.LogTrace("[{method}()]", nameof(InitialiseHttpClient));
 
-        _httpClient.BaseAddress = new Uri(_apiUrlBase);
+        _httpClient.BaseAddress = new Uri(_apiSettings.ChijimuApi?.UrlBase ?? string.Empty);
         _httpClient.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
     }
 
